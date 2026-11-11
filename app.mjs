@@ -1,3 +1,5 @@
+import {installLanguageSelector} from './i18n.mjs';
+const languageControl=installLanguageSelector();
 import {mountSupport} from './support.mjs';
 const requestedSupport=location.hash==='#apoios';
 import {offlineInfo,offlineSummary} from './offline.mjs';
@@ -254,7 +256,7 @@ function renderSearch() {
   if(source==='songs'){renderSongs();return;}
   if(source==='soundmondo'){renderOnline();return;}
   const entries = data[source].filter(e => `${e.name ?? e.nome} ${e.label ?? ''} ${e.sons ?? ''}`.toLocaleLowerCase('pt-PT').includes(term));
-  $('results-title').textContent = source === 'user1' ? 'Os teus sons · User 1' : source === 'band' ? 'Cão de Bila' : 'Presets de fábrica';
+  $('results-title').textContent = source === 'user1' ? 'Os teus sons · User 1' : source === 'band' ? 'Repertório local' : 'Presets de fábrica';
   $('results-count').textContent = `${entries.length} ${entries.length === 1 ? 'som' : 'sons'}`;
   const rows = entries.slice(0, state.limit).map(e => {
     const row = html('article', { class: 'sound-row' }), copy = html('div');

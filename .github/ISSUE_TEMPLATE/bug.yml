@@ -1,14 +1,14 @@
-name: Erro na aplicação
-description: Relatar uma falha. Pedidos de desenvolvimento de apoiantes usam o formulário privado.
-title: '[Erro] '
+name: Bug report
+description: Report an app error. Supporter requests use the private form.
+title: '[Bug] '
 body:
   - type: textarea
     id: description
     attributes:
-      label: O que aconteceu e como reproduzir
+      label: What happened and how to reproduce
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Versão e dispositivo
+      label: App version and device
