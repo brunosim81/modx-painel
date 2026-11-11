@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#13171c"><meta name="color-scheme" content="dark">
+  <title>MODX · Painel</title><link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="orientation-notice" aria-label="Orientação do ecrã"><h1>Usa o painel na horizontal.</h1><p>Roda o dispositivo ou aumenta a largura da janela.</p><button data-fullscreen>Abrir em ecrã inteiro</button></aside>
+  <header class="topbar"><a class="brand" href="#performance" aria-label="MODX Painel, início">MODX<span>PAINEL</span></a>
+    <div class="connection"><span id="connection-status" role="status">Sem ligação</span><button id="connect" class="primary">Ligar ao MODX</button><button data-fullscreen aria-pressed="false">Ecrã inteiro</button></div>
+  </header>
+  <div class="workspace">
+    <aside class="sidebar"><p class="eyebrow">MODX6+ / USB</p><nav aria-label="Painel">
+      <button data-view="performance" class="nav active">Performance<span>01</span></button>
+      <button data-view="live" class="nav">Live Set<span>02</span></button>
+      <button data-view="effects" class="nav">Efeitos<span>03</span></button>
+      <button data-view="search" class="nav">Procurar sons<span>04</span></button>
+    </nav><div class="sidebar-bottom"><span class="usb-mark">USB</span><p>O som vem do teu Yamaha.<br>O computador é o teu painel.</p><button id="install" hidden>Instalar aplicação</button></div></aside>
+    <main>
+      <div class="layout-switch" aria-label="Vista do painel"><button id="layout-performance" aria-pressed="true">Performance</button><button id="layout-physical" aria-pressed="false">Painel físico</button></div>
+      <div class="utility"><div><span id="read-state" class="eyebrow">SEM LEITURA DO TECLADO</span><span id="dirty" hidden>Alterações por guardar</span></div><div class="actions"><button id="refresh" data-hardware>Ler teclado</button><button id="save" data-hardware>Guardar cópia</button><button id="save-previous" hidden>Guardar edição anterior</button><button id="import" data-hardware>Importar som</button><input id="file" type="file" accept=".syx" hidden></div></div>
+      <div id="notice" class="notice" role="status" aria-live="polite">Liga o MODX por USB e escolhe Ligar ao MODX. Podes consultar os sons enquanto estás sem ligação.</div>
+      <section id="view-performance" class="view modx-screen">
+        <div class="heading"><div><p class="eyebrow">PERFORMANCE / HOME</p><h1 id="performance-name">O teu teclado, à mão.</h1><p id="performance-description" class="muted">Lê a Performance aberta para trabalhar nas suas Parts, cenas e efeitos.</p></div><div class="level-controls" id="global-controls"></div></div>
+        <div class="screen-assign"><div class="section-title"><h2>Common · Assign 1–8</h2><span id="engine-summary" class="engine-summary"></span></div><div id="assignable-knobs" class="assignable-knobs"></div></div>
+        <div class="scene-strip"><span class="eyebrow">SCENE</span><div id="scenes" class="scenes" aria-label="Cenas da Performance"></div></div>
+        <div class="section-title"><h2>Parts</h2><div class="segments" aria-label="Grupo de Parts"><button id="parts-first" aria-pressed="true">1–8</button><button id="parts-second" aria-pressed="false">9–16</button></div></div>
+        <div id="parts" class="parts"></div>
+        <div class="bottom-note"><span>MEMÓRIA DE EDIÇÃO</span><p>Os controlos alteram o som aberto. Guarda uma cópia no computador e usa <strong>Store</strong> no teclado para conservar uma edição.</p></div>
+      </section>
+      <section id="view-physical" class="view" aria-label="Painel físico do MODX" hidden><div id="physical-panel" class="physical-panel"></div><p class="muted footnote">Knobs: Common Assign · Faders: volume das Parts. Assign 1/2 mostra o último comando enviado ou recebido por MIDI. Os botões assinalados como indisponíveis ficam no teclado. Store continua a ser feito no Yamaha.</p></section>
+      <section id="view-live" class="view" hidden><div class="heading"><div><p class="eyebrow">LIVE SET / CÃO DE BILA</p><h1>O alinhamento do concerto.</h1><p class="muted">25 temas, na tua ordem. Cada posição chama a Performance guardada no Yamaha.</p></div><div class="bank-label">USER 8<span>Cao de Bila</span></div></div><div class="filterbar"><label for="live-filter">Encontrar tema</label><input id="live-filter" type="search" placeholder="Título da música…"><div id="live-pages" class="segments"><button data-page="1" aria-pressed="true">01–16</button><button data-page="2" aria-pressed="false">17–25</button></div></div><div id="live-grid" class="live-grid"></div></section>
+      <section id="view-effects" class="view" hidden><div class="heading"><div><p class="eyebrow">EFFECT / ROUTING</p><h1>Efeitos do som aberto.</h1><p class="muted">Ajusta o espaço e a presença de cada Part, mantendo os algoritmos da Performance.</p></div></div><div id="effects-global" class="effect-globals"></div><div class="section-title"><h2>Envios e inserções por Part</h2></div><div class="table-scroll"><table><thead><tr><th>Part</th><th>Reverb</th><th>Variation</th><th>Inserção A</th><th>Inserção B</th></tr></thead><tbody id="effects-parts"></tbody></table></div><p class="muted footnote">Abre Editar parâmetros para editar a síntese e o Reverb. Variation, inserções, A/D, Master FX e Master EQ estão disponíveis em Editar parâmetros. A cobertura dos parâmetros continua em desenvolvimento.</p></section>
+      <section id="view-search" class="view" hidden><div class="heading"><div><p class="eyebrow">CATEGORY SEARCH / BIBLIOTECA</p><h1>Encontra o próximo som.</h1><p class="muted">Os teus sons do User 1, os presets do MODX6+ e pesquisa em fontes online.</p></div></div><div class="filterbar"><label for="sound-filter">Nome do timbre ou tema</label><input id="sound-filter" type="search" placeholder="Piano, Rhodes, Stairway…"><select id="sound-source" aria-label="Fonte de sons"><option value="user1">Os teus sons · User 1</option><option value="presets">Presets de fábrica</option><option value="band">Cão de Bila</option><option value="songs">Músicas · repertório e online</option><option value="soundmondo">Soundmondo · online</option></select><button id="online-query" hidden>Pesquisar Soundmondo</button></div><div class="section-title"><h2 id="results-title">Os teus sons</h2><span id="results-count" class="muted"></span></div><div id="sound-results" class="sound-results"></div></section>
+      <footer><span id="footer-state">Biblioteca local disponível</span><span id="build-version">MODX PAINEL · LOCAL</span></footer>
+    </main>
+  </div>
+  <dialog id="unsaved"><form method="dialog"><p class="eyebrow">ANTES DE MUDAR DE SOM</p><h2>Guarda o que acabaste de fazer.</h2><p>Há alterações feitas neste painel. Mudar de som substitui a Performance na memória de edição.</p><div class="dialog-actions"><button value="cancel">Cancelar</button><button value="discard">Descartar e mudar</button><button class="primary" value="save">Guardar cópia e mudar</button></div></form></dialog>
+  <noscript>Ativa o JavaScript no Chrome para utilizar o painel MIDI.</noscript>
+  <script>
+    if (location.protocol === 'file:') {
+      document.getElementById('notice').textContent = 'Abre o atalho MODX Painel ou o ficheiro de arranque do teu computador. A ligação ao teclado não funciona abrindo index.html diretamente.';
+      document.getElementById('connect').disabled = true;
+    } else {
+      const connect = document.getElementById('connect');
+      connect.disabled = true; connect.textContent = 'A abrir o painel…';
+      const failure = () => {
+        const notice = document.getElementById('notice');
+        notice.textContent = 'Não foi possível abrir o painel. Confirma que extraíste todo o ZIP e reabre pelo atalho ou pelo ficheiro de arranque.';
+        notice.classList.add('error'); connect.disabled = true; connect.textContent = 'Painel indisponível';
+      };
+      const ready = () => {
+        window.removeEventListener('error', failure);
+        window.removeEventListener('unhandledrejection', failure);
+      };
+      window.addEventListener('error', failure);
+      window.addEventListener('unhandledrejection', failure);
+      window.addEventListener('modx-ready', ready, {once:true});
+      const app = document.createElement('script');
+      app.addEventListener('error', failure, {once:true});
+      app.type = 'module'; app.src = 'app.mjs'; document.body.append(app);
+    }
+  </script>
+</body></html>

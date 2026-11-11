@@ -1,0 +1,14 @@
+name: Erro na aplicação
+description: Relatar uma falha. Pedidos de desenvolvimento de apoiantes usam o formulário privado.
+title: '[Erro] '
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: O que aconteceu e como reproduzir
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versão e dispositivo

@@ -1,0 +1,4 @@
+import {readFile} from 'node:fs/promises';import {createInterface} from 'node:readline/promises';import {issueGrant} from '../server/donor-grants.mjs';
+const config=process.env.DONOR_GRANT_SECRET?{secret:process.env.DONOR_GRANT_SECRET}:JSON.parse(await readFile(new URL('../.modx-support-admin.json',import.meta.url),'utf8'));
+const rl=createInterface({input:process.stdin,output:process.stdout});
+try{console.log('Confirma no PayPal o destinatário, estado concluído, moeda EUR e valor. Não uses capturas de ecrã como única prova.');const receipt=(await rl.question('ID da transação PayPal: ')).trim(),amount=(await rl.question('Valor pago em EUR: ')).trim(),confirmed=(await rl.question('Escreve CONFIRMADO depois de verificar no PayPal: ')).trim();console.log('Código pessoal de uso único, válido por 90 dias:\n'+issueGrant({receipt,amount,confirmed},config.secret));}finally{rl.close();}

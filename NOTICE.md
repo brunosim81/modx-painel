@@ -1,0 +1,1 @@
+Aplicação independente, sem afiliação Yamaha ou PayPal. Marcas pertencem aos titulares. Catálogos referem documentação Yamaha; não contêm amostras áudio. Código disponibilizado publicamente sem licença open-source atribuída nesta release. Não se atribuem licenças novas a conteúdos de terceiros.

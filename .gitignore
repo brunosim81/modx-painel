@@ -1,0 +1,7 @@
+.env*
+.modx-support-admin.json
+node_modules/
+*.syx
+*.X8*
+MODX-biblioteca-local.json
+*.zip
