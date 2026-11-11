@@ -123,7 +123,7 @@ function validateFullPerformance(messages) {
 }
 
 export class ModxMidi extends EventTarget {
-  constructor() { super(); this.access = null; this.input = null; this.output = null; this.pending = null; this.lastDump = null; this.transportState=null; this.liveSetBank=null; this.auxBlocks=new Map();this.sceneCC = null; this.confirmed = false; this.activeNotes=new Set();this.sustain=new Set();this.lastNote=0; }
+  constructor() { super(); this.access = null; this.input = null; this.output = null; this.pending = null; this.lastDump = null; this.transportState=null; this.liveSetBank=null;this.liveSetPage=null;this.liveSelectChannels=new Map(); this.auxBlocks=new Map();this.sceneCC = null; this.confirmed = false; this.activeNotes=new Set();this.sustain=new Set();this.lastNote=0; }
   notify(type) { this.dispatchEvent(new Event(type)); }
   async connect() {
     this.disconnect();
@@ -152,7 +152,7 @@ export class ModxMidi extends EventTarget {
     } catch (error) { this.disconnect(); throw error; }
   }
   disconnect() {
-    this.confirmed = false;this.transportState=null;this.updateLiveSetBank(null);this.activeNotes.clear();this.sustain.clear();
+    this.confirmed = false;this.transportState=null;this.liveSetPage=null;this.liveSelectChannels.clear();this.updateLiveSetBank(null);this.activeNotes.clear();this.sustain.clear();
     if (this.pending) { clearTimeout(this.pending.timer); this.pending.reject(new Error('Ligação MIDI terminada.')); this.pending = null; }
     if (this.input) { this.input.onmidimessage = null; this.input.close().catch(() => {}); }
     if (this.output) this.output.close().catch(() => {});
@@ -163,6 +163,9 @@ export class ModxMidi extends EventTarget {
     if(bytes.length===1&&[250,251,252].includes(bytes[0])){this.transportState={command:({250:'start',251:'continue',252:'stop'})[bytes[0]],source:'received'};this.dispatchEvent(new CustomEvent('transport',{detail:this.transportState}));return;}
     if (bytes[0] >= 248) return;
     const kind=bytes[0]&240,channel=bytes[0]&15;
+    if(kind===176&&bytes.length===3&&bytes[1]===0)this.liveSelectChannels.set(channel,{msb:bytes[2],lsb:null});
+    if(kind===176&&bytes.length===3&&bytes[1]===32){const bank=this.liveSelectChannels.get(channel);if(bank)bank.lsb=bytes[2];}
+    if(kind===192&&bytes.length===2){const bank=this.liveSelectChannels.get(channel);if(bank?.msb===62&&Number.isInteger(bank.lsb)&&bank.lsb>=0&&bank.lsb<16&&bytes[1]<16){this.liveSetPage=bank.lsb;this.notify('live-navigation');}else this.liveSetPage=null;}
     if(this.confirmed&&kind===176&&bytes.length===3&&bytes[2]<=127){
       const common=this.current?.blocks?.get('48:64:0');
       for(let index=0;index<2;index++)if(common?.[71+index]>0&&common[71+index]===bytes[1]){this.dispatchEvent(new CustomEvent('assign',{detail:{index,channel,value:bytes[2]>=64}}));}
@@ -219,7 +222,15 @@ export class ModxMidi extends EventTarget {
   updateLiveSetBank(bank){
     const next=Number.isInteger(bank)&&bank>=0&&bank<=16?bank:null;
     if(next!==this.liveSetBank||next===null)for(const name of this.auxBlocks.keys())if(Number(name.split(':')[0])>=2&&Number(name.split(':')[0])<=5)this.auxBlocks.delete(name);
-    this.liveSetBank=next;
+    const changed=next!==this.liveSetBank;this.liveSetBank=next;if(changed){this.liveSetPage=null;this.notify('live-navigation');}
+  }
+  async selectLiveSetBank(bank){
+    this.ready();if(!Number.isInteger(bank)||bank<0||bank>16)throw Error('Banco Live Set inválido.');
+    if(!this.quietForBulk())throw Error('Muda de banco numa pausa, depois de soltar as teclas e o sustain.');
+    if(await this.readLiveSetBank()===bank)return bank;
+    this.ready();this.updateLiveSetBank(null);this.output.send(parameterMessage([9,0,0],[bank]));await sleep(80);
+    if(await this.readLiveSetBank()!==bank)throw Error('O MODX não confirmou o banco pedido.');
+    return bank;
   }
   async readLiveSetBank(){
     this.ready();

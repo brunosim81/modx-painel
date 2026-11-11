@@ -8,7 +8,7 @@ Aplicação independente para Yamaha MODX6+, com vistas **Performance** e **Pain
 
 Usa MIDIWeb Browser, iPadOS17.6+ e cabo de dados iPad → MODX **USB TO HOST**. No teclado: Utility → Settings → MIDI I/O → MIDI IN/OUT = USB. Autoriza MIDI/SysEx, verifica o diagnóstico e toca Ligar ao MODX. Safari/Chrome no iPad não fornecem este acesso Web MIDI por si só.
 
-Em Offline / atualizações prepara a cache e espera por Cópia offline pronta. Importa a bibliotecaJSON se necessário, exporta uma cópia para Ficheiros e testa reabrir com Wi-Fi/dados móveis desligados, mantendo USB. A pesquisa online e o envio de pedidos requerem Internet. Limpar a cache pode apagar dados do browser. Sem Mac/PC após preparação.
+Em **App settings / Definições da app → Offline / atualizações** prepara a cache e espera por Cópia offline pronta. Importa a bibliotecaJSON se necessário, exporta uma cópia para Ficheiros e testa reabrir com Wi-Fi/dados móveis desligados, mantendo USB. A pesquisa online e o envio de pedidos requerem Internet. Limpar a cache pode apagar dados do browser. Sem Mac/PC após preparação.
 
 Teste seguro: anota um volume de Part, aumenta1 na app e repõe, aguardando Valor confirmado pelo MODX em ambas. Depois altera no teclado e confirma as duas vistas. Se uma ação não emitir MIDI, usa Ler teclado. Não uses Store no teste.
 
@@ -31,3 +31,7 @@ Vê [PEDIDOS-APOIANTES.md](PEDIDOS-APOIANTES.md). Para problemas na app podem se
 ## Fonte e distribuição
 
 Código e ficheiros públicos desta release estão neste repositório. Não foi atribuída uma licença open-source por defeito; direitos de terceiros não são transferidos. As Releases têm o ZIPWindows genérico e SHA256SUMS. Mantém-se apenas o ZIPWindows mais recente na distribuição local.
+
+Live Set: a vista física inclui banco/página, grelha4×4 e Performance ativa em baixo. **Ler** consulta a página do banco aberto no MODX. Navegar na biblioteca local não muda o ecrã do teclado. Banco e posição USB voltam a ser verificados antes de chamar um som. Sem consultas contínuas.
+
+A seleção de banco USB (Preset/User/Library) é confirmada por leitura. A app acompanha mensagens de banco e consulta o banco ao ligar e após atualização MIDI da Performance na vista física Live Set. A página acompanha apenas mensagens Live Set MSB62/LSB/página + Program Change recebidas. Navegar apenas de página continua local: sem comando validado para mudar a página do teclado sem chamar um som. Todos os menus touch partilham moldura e faixa da Performance ativa; os botões das funções são maiores.

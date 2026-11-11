@@ -4,7 +4,7 @@ An independent Yamaha MODX6+ controller with **Performance** and **Physical pane
 
 **Open:** https://modx-painel.vercel.app
 
-English is the default. Use **Language / Idioma** to switch to Portuguese. The selection is stored on your device and works offline. Performance names, user text and MIDI values are preserved.
+English is the default. Open **App settings**, then use **Language / Idioma** to switch to Portuguese. The selection is stored on your device and works offline. Performance names, user text and MIDI values are preserved.
 
 ## iPad
 
@@ -33,3 +33,7 @@ Smart Morph and native sample editing do not have full keyboard parity. Physical
 No open-source license has been assigned by default; third-party rights are not transferred. This is not an official Yamaha or PayPal product. Releases include a generic Windows ZIP and SHA256SUMS. Only the newest Windows ZIP is retained locally.
 
 [Português](README.pt.md)
+
+Live Set: the physical view has bank/page browsing, a 4×4 grid and the active Performance strip. **Read** fetches the selected page from the bank currently open on the MODX. Local bank/page browsing does not navigate the keyboard screen. The USB bank and slot are rechecked before recalling a hardware slot. No continuous polling.
+
+USB bank selection (Preset/User/Library) is verified by readback. Incoming bank messages are followed; bank state is also read on connection and after MIDI-triggered Performance refresh in physical Live Set view. Page following works only when the keyboard emits Live Set MSB62/LSB/page + Program Change. Page-only browsing remains app-local: no validated command for moving the hardware page without recalling a sound. All touch menus share the same frame and active Performance footer; function buttons are larger.

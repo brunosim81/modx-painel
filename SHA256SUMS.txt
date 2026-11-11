@@ -1,1 +1,1 @@
-2ffa0fd986ffdf376c163cdd483a6f1db28f969985e8b8b49705a0087af10ae1  MODX-Painel-Windows-dev86.zip
+2d204408b0c99688d7690b32105af107418de856b2ffdf7b3c7023ad33e808d7  MODX-Painel-Windows-dev90.zip

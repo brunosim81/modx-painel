@@ -1,3 +1,5 @@
+import {mountLiveTouch,livePageAddresses,readLiveTouchPage,touchActivePerformance} from './live-touch.mjs';
+import {mountAppSettings} from './app-settings.mjs';
 import {installLanguageSelector} from './i18n.mjs';
 const languageControl=installLanguageSelector();
 import {mountSupport} from './support.mjs';
@@ -32,7 +34,7 @@ const $ = id => document.getElementById(id);
 const midi = new ModxMidi();
 const [data,controlNames,effectCatalog,factoryCatalog]=await Promise.all(['data.json','control-names.json','effect-catalog.json','factory-catalog.json'].map(async file=>{const response=await fetch(file);if(!response.ok)throw Error(`Não foi possível ler ${file}. Confirma que extraíste o pacote completo.`);return response.json();}));
 factoryCatalog.arpeggios.push(...userArpeggios);
-const state = { view: 'performance', layout: 'performance', knobBank:0, knobMode:'assign', faderBank:0, sceneBank:0, physicalScreen:'live', current: null, busy: false, connected: false, dirty: false, recoveries:[], partPage: 0, livePage: 1, limit: 80, lastRead: null };
+const state = { view: 'performance', layout: 'performance', knobBank:0, knobMode:'assign', faderBank:0, sceneBank:0, physicalScreen:'live', touchBank:data.band.length?'band':'user1',touchPage:0, current: null, busy: false, connected: false, dirty: false, recoveries:[], partPage: 0, livePage: 1, limit: 80, lastRead: null };
 const online={results:[],count:0,page:0,query:'',loading:false,error:'',request:0,controller:null,detailBusy:false};
 const unitCopyTarget={part:null,unit:1,exchange:false};
 let editorLiveSlot=0,editorDialKey=null,dataDialCancel=()=>{};
@@ -87,6 +89,7 @@ async function autoSync() {
   autoRead=(async()=>{
     try {
       const current=await midi.readPerformance();
+      if(state.layout==='physical'&&state.physicalScreen==='live')await midi.readLiveSetBank();
       const changed=!sameDump(previousDump,midi.lastDump);
       if(changed && previous && previous.name!==current.name) {
         if(state.dirty && previousDump) state.recoveries.push({name:previous.name,bytes:previousDump.slice()});
@@ -404,7 +407,7 @@ function renderPhysical() {
       for(const area of [{id:'part',label:'Geral'},...editorAreas(p,part)])list.append(html('button',{onclick:()=>{openEditor(part);editorArea=area.id;renderEditor();}},area.label));
     };
     destination.addEventListener('change',paint);paint();
-    screenBody.append(destination,list,html('p',{},'Smart Morph e Waveform estão nos atalhos abaixo. A aprendizagem do mapa e a edição de amostras continuam no teclado.'));
+    screenBody.append(destination,list,html('p',{},'Smart Morph e Waveform estão nos separadores do touch. A aprendizagem do mapa e a edição de amostras continuam no teclado.'));
   } else if(state.physicalScreen==='morph') {
     screen.querySelector('h2').textContent='Smart Morph · preparação';
     screenBody.append(html('p',{},'Fontes FM-X nas Parts 9–16; o resultado do mapa fica na Part 1. Os ficheiros disponíveis não expõem um mapa editável nem comandos Learn/Play validados. Não é uma simulação do mapa.'));
@@ -422,19 +425,21 @@ function renderPhysical() {
     if(!list.children.length)list.append(html('p',{},'Sem referências AWM2 ou Drum nesta leitura. FM-X não usa waveforms de amostras.'));
     screenBody.append(list);
   } else if(state.physicalScreen==='live') {
-    if(!data.user1.length)screenBody.append(html('p',{},'Sem catálogo User 1 neste browser. Podes importar a tua biblioteca em iPad / diagnóstico USB. A ligação USB e os editores não dependem desta lista.'));
-    for(const entry of data.user1.slice(0,16)) {
-      const tile=html('button',{class:'hardware-tile',disabled:!connected(),'aria-pressed':String(p?.name===entry.name),onclick:()=>choose(entry)},entry.name);
-      tiles.append(tile);
-    }
+    state.touchRender=renderPhysical;
+    mountLiveTouch({html,body:screenBody,screen,state,data,midi,current:p,connected,choose,
+      changeBank:bank=>run(async()=>{await midi.selectLiveSetBank(bank);state.touchBank='hardware';state.touchPage=0;await readLiveTouchPage(midi,0);},'Banco confirmado pelo MODX.'),
+      readPage:()=>run(async()=>{await readLiveTouchPage(midi,state.touchPage);state.touchBank='hardware';},'Página Live Set lida do MODX.'),
+      selectSlot:async(slot,entry)=>{if(!connected()||!await canReplace())return;const page=state.touchPage,bank=midi.liveSetBank;await run(async()=>{if(bank===null||await midi.readLiveSetBank()!==bank)throw Error('O banco Live Set mudou. Volta a ler a página.');const address=livePageAddresses(page)[slot+2],cached=midi.auxBlocks.get(address.join(':'))?.slice();await midi.readAux(address);const currentEntry=midi.auxBlocks.get(address.join(':'));if(!cached||!currentEntry||!sameDump(cached,currentEntry)||currentEntry[25]!==1)throw Error('Posição sem leitura válida.');accept(await midi.selectPerformance({msb:62,lsb:page,program:slot}));state.dirty=false;},'Performance chamada e lida do teclado.');},
+      editPage:()=>{openEditor(null);editorArea='liveSet';editorUnit=state.touchPage;renderEditor();},search:()=>view('search')});
   } else {
     for(let i=0;i<8;i++){const part=p?.parts.find(n=>n.index===i),tile=html('div',{class:'hardware-tile'});if(part){tile.setAttribute('role','button');tile.tabIndex=0;tile.addEventListener('click',()=>openEditor(i));tile.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openEditor(i);}});}tile.append(html('strong',{},`${i+1}. ${part?.name||'Livre'}`),html('span',{},part?`${part.engine} · ${part.volume}`:'Sem Part'));tiles.append(tile);}
   }
-  if(['home','live'].includes(state.physicalScreen))screenBody.append(tiles,html('h1',{},p?.name||'Liga o MODX'),html('p',{},p?`Cena ${p.scene+1} · ${p.parts.length} Parts`:'Sem leitura do teclado'));
-  if(p&&['home','live'].includes(state.physicalScreen))screenBody.append(range('physical-volume','Volume da Performance',p.volume,0,127,v=>edit([48,64,56],v)));
+  if(state.physicalScreen==='home')screenBody.append(tiles);
+  if(p&&state.physicalScreen==='home')screenBody.append(range('physical-volume','Volume da Performance',p.volume,0,127,v=>edit([48,64,56],v)));
   const shortcuts=html('div',{class:'hardware-touch-tabs','aria-label':'Páginas do touch'});
   for(const [key,label] of [['home','Home'],['live','Live Set'],['functions','Funções'],['morph','Smart Morph'],['waveform','Waveform']])shortcuts.append(html('button',{'aria-pressed':String(state.physicalScreen===key),onclick:()=>{state.physicalScreen=key;renderPhysical();}},label));
   screen.append(shortcuts,screenBody);
+  if(state.physicalScreen!=='live')screen.append(touchActivePerformance(html,p,()=>view('search')));
   const nav=group('Navegação na PWA');nav.classList.add('hardware-nav');
   for(const [label,target] of [['Home','home'],['Live Set','live'],['Funções','functions']])nav.append(html('button',{'aria-pressed':String(state.physicalScreen===target),onclick:()=>{state.physicalScreen=target;renderPhysical();}},label));
   nav.append(html('button',{onclick:()=>view('search'),title:'Abrir pesquisa de sons na PWA'},'Category'),html('button',{onclick:()=>{openEditor(null);editorArea='reverb';renderEditor();}},'Efeitos'));
@@ -481,7 +486,7 @@ $('connect').addEventListener('click', () => {
   if (state.connected) {
     wheelResets.forEach(reset=>reset());assignResets.forEach(reset=>reset());midi.disconnect(); state.connected = false; render(); notice('Ligação terminada. O som no Yamaha mantém-se.'); return;
   }
-  run(async () => { accept(await midi.connect()); state.connected = true; }, 'MODX identificado. O painel mostra os dados recebidos do teclado.');
+  run(async () => { accept(await midi.connect()); state.connected = true;await midi.readLiveSetBank(); }, 'MODX identificado. O painel mostra os dados recebidos do teclado.');
 });
 $('refresh').addEventListener('click', () => run(async () => accept(await midi.readPerformance()), 'Leitura atualizada.'));
 $('save').addEventListener('click', () => { try { downloadSnapshot(); render(); notice('Cópia enviada para as transferências do browser. Confirma que guardaste o ficheiro.'); } catch (error) { notice(error.message, true); } });
@@ -742,6 +747,7 @@ document.querySelector('.layout-switch').append(openEditorButton);
 
 document.querySelector('#view-effects .heading').append(html('button',{onclick:()=>{openEditor(null);editorArea='reverb';renderEditor();}},'Editar Reverb'));
 
+midi.addEventListener('live-navigation',()=>{if(Number.isInteger(midi.liveSetBank)||Number.isInteger(midi.liveSetPage))state.touchBank='hardware';if(Number.isInteger(midi.liveSetPage))state.touchPage=midi.liveSetPage;if(!state.busy&&!dragging)renderPhysical();});
 midi.addEventListener('settings',()=>{if(dragging)pendingRender=true;else render();});
 
 fetch('build.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(build=>{if(build?.id&&$('build-version'))$('build-version').textContent=`MODX · ${build.id}`;}).catch(()=>{});
@@ -778,3 +784,5 @@ offlineBody.append(html('button',{onclick:()=>{try{const raw=JSON.stringify({for
 if(globalThis.isSecureContext&&'serviceWorker' in navigator){navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloadForUpdate)location.reload();});navigator.serviceWorker.getRegistration().then(async existing=>{const registration=existing??await navigator.serviceWorker.register('sw.js');offlineRegistration=registration;const showUpdate=()=>{if(registration.waiting){updateApp.hidden=false;offlineStatus.textContent='Atualização disponível. Aplica-a numa pausa, depois de desligar o MIDI.';}};showUpdate();const watch=()=>registration.installing?.addEventListener('statechange',()=>{if(registration.waiting)showUpdate();else if(registration.active)checkOffline();});registration.addEventListener('updatefound',watch);watch();if(existing)registration.update().catch(()=>{});if(registration.active&&!registration.waiting)checkOffline();else if(!registration.waiting)offlineStatus.textContent='A guardar os ficheiros da app. Mantém esta página aberta com Internet.';}).catch(()=>{offlineStatus.textContent='Este browser não conseguiu preparar a cache PWA. Usa a função offline do MIDIWeb e confirma com Wi-Fi desligado.';});}else offlineStatus.textContent='Cache PWA indisponível neste contexto. Abre o endereço HTTPS no MIDIWeb e verifica o suporte offline do browser.';
 
 mountSupport(offlinePanel,{html,notice,open:requestedSupport});
+
+mountAppSettings({html,ipadHelp,offlinePanel,openSupport:requestedSupport});
